@@ -16,6 +16,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 import net.minecraft.resources.ResourceLocation;
@@ -31,12 +33,14 @@ public class CorviSpawnsManager {
 	private final Map<ResourceLocation, CorviSpawnDataPackage> DEFAULT_SPAWNS;
 	private final EntityType<?>[] validEntityTypes;
 	private boolean needsLoad = true;
+	private boolean logAdvancedDebug;
 	
-	public CorviSpawnsManager(String modidIn, Map<ResourceLocation, CorviSpawnDataPackage> defaultSpawnsIn, EntityType<?>[] validEntityTypesIn) {
+	public CorviSpawnsManager(String modidIn, Map<ResourceLocation, CorviSpawnDataPackage> defaultSpawnsIn, EntityType<?>[] validEntityTypesIn, boolean logAdvancedDebugIn) {
 		this.MODID = modidIn;
 		this.DEFAULT_SPAWNS = defaultSpawnsIn;
 		this.validEntityTypes = validEntityTypesIn;
 		this.needsLoad = true;
+		this.logAdvancedDebug = logAdvancedDebugIn;
 	}
 	
 	private void loadSpawns() {
@@ -55,31 +59,36 @@ public class CorviSpawnsManager {
 					writer.flush(); //flush data to file   <---
 					writer.close(); //close write
 				} catch (IOException e) {
-					CorviCraftSpawns.getLogger().error("Unable to write to spawns config file for mod " + this.MODID + " due to the following--");
-					CorviCraftSpawns.getLogger().error(e.toString());
+					CorviCraftSpawns.getLogger().error("Unable to write to config file for mod " + this.MODID + " due to the following--");
+					e.printStackTrace();
+				} catch (JsonIOException e) {
+					CorviCraftSpawns.getLogger().error("Unable to write to config json for mod " + this.MODID + " due to the following--");
+					e.printStackTrace();
 				}
 			}
 			
 			JsonArray jsonArray = new JsonArray();
 			
 			//Tries to read spawns from file
+			FileReader reader = null;
 			try {
-				FileReader reader = null;
-				//Attempt to read from file (catches file not found)
-				try {
-					reader = new FileReader(configFile);
-					jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
-					this.BIOME_SPAWN_SETS = this.readSpawnsFromJSON(jsonArray);
-				//If the file cannot be found, use default spawns (this really shouldn't happen, but we're trying to be safe)
-				} catch (FileNotFoundException e) {
-					CorviCraftSpawns.getLogger().warn("Couldn't find spawns config file for mod " + this.MODID + "!  Using defaults instead.");
-					e.printStackTrace();
-				}
-			//If spawns cannot be read
-			} catch (Exception e) {
-				CorviCraftSpawns.getLogger().error("Unable to load spawns config file for mod " + this.MODID + " due to the following--");
-				CorviCraftSpawns.getLogger().error(e.toString());
-				CorviCraftSpawns.getLogger().error("Using default settings instead.");
+				reader = new FileReader(configFile);
+				jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
+				this.BIOME_SPAWN_SETS = this.readSpawnsFromJSON(jsonArray);
+				reader.close();
+			//If the file cannot be found, use default spawns (this really shouldn't happen, but we're trying to be safe)
+			} catch (FileNotFoundException e) {
+				CorviCraftSpawns.getLogger().warn("Couldn't find spawns config file for mod " + this.MODID + "!  Using defaults instead.");
+				e.printStackTrace();
+			} catch (JsonParseException e) {
+				CorviCraftSpawns.getLogger().warn("Spawn config file text for mod " + this.MODID + " is not valid JSON!  Using defaults instead.");
+				e.printStackTrace();
+			} catch (IllegalStateException e) {
+				CorviCraftSpawns.getLogger().warn("Spawn config file for mod " + this.MODID + " is of the wrong type (not a JSON array)!  Using defaults instead.");
+				e.printStackTrace();
+			} catch (IOException e) {
+				CorviCraftSpawns.getLogger().warn("Unable to load spawns config file for mod " + this.MODID + " !  Using defaults instead.");
+				e.printStackTrace();
 			}
 			//If spawns have not been set, use default
 			if (this.BIOME_SPAWN_SETS.isEmpty()) this.BIOME_SPAWN_SETS = this.DEFAULT_SPAWNS;;
@@ -122,10 +131,15 @@ public class CorviSpawnsManager {
 		Builder<ResourceLocation, CorviSpawnDataPackage> builderSettings = ImmutableMap.builder();
 		if (!jsonArrayIn.isEmpty()) {
 			for (JsonElement e : jsonArrayIn) {
-				CorviSpawnDataPackage spawnPackage = new CorviSpawnDataPackage(e.getAsJsonObject());
-				if (spawnPackage.isValid()) for (int i = 0; i < spawnPackage.getBiomes().length; i++)
-					builderSettings.put(spawnPackage.getBiomes()[i],
-							new CorviSpawnDataPackage(spawnPackage.getSpawnDataEntries(), spawnPackage.getBiomes()[i], spawnPackage.overrideExistingEntries()));
+				try {
+					CorviSpawnDataPackage spawnPackage = new CorviSpawnDataPackage(e.getAsJsonObject());
+					if (spawnPackage.isValid()) for (int i = 0; i < spawnPackage.getBiomes().length; i++)
+						builderSettings.put(spawnPackage.getBiomes()[i],
+								new CorviSpawnDataPackage(spawnPackage.getSpawnDataEntries(), spawnPackage.getBiomes()[i], spawnPackage.overrideExistingEntries()));
+				} catch (IllegalStateException error) {
+	    			CorviCraftSpawns.getLogger().warn("Provided spawns object was of the wrong type!");
+	    			error.printStackTrace();
+	    		}
 			}
 		}
 		return builderSettings.build();
@@ -138,6 +152,7 @@ public class CorviSpawnsManager {
 		//If biomes haven't been loaded, load biomes
 		if (this.needsLoad) this.loadSpawns();
 		if (this.BIOME_SPAWN_SETS.containsKey(eventIn.getName())) {
+			if (this.logAdvancedDebug) this.BIOME_SPAWN_SETS.get(eventIn.getName()).logDataPackage();
 			//If should override existing entries, remove all from the valid entities list
 			if (this.BIOME_SPAWN_SETS.get(eventIn.getName()).overrideExistingEntries()) {
 				for (int i = 0; i < this.validEntityTypes.length; i++) {
@@ -155,4 +170,9 @@ public class CorviSpawnsManager {
 			this.BIOME_SPAWN_SETS.get(eventIn.getName()).addSpawnEntries(eventIn);
 		}
 	}
+	
+	public Map<ResourceLocation, CorviSpawnDataPackage> getSpawnSets() {return this.BIOME_SPAWN_SETS;}
+	
+	public boolean getLogAdvancedDebug() { return this.logAdvancedDebug; }
+	public void setLogAdvancedDebug(boolean logAdvancedDebugIn) { this.logAdvancedDebug = logAdvancedDebugIn; }
 }

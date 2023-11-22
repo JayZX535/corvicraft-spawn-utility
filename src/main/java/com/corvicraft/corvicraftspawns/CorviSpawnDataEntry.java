@@ -30,14 +30,14 @@ public class CorviSpawnDataEntry {
 	 * Creates a SpawnDataPackage from the provided JSON (if valid)
 	 */
 	public CorviSpawnDataEntry (JsonObject jsonObjIn) {
-		this.spawnCategory = jsonObjIn.has(SPAWN_TYPE) ? getSpawnType(jsonObjIn.get(SPAWN_TYPE).getAsInt()) : MobCategory.CREATURE;
-		this.weight = jsonObjIn.has(SPAWN_WEIGHT) ? Math.max(0, jsonObjIn.get(SPAWN_WEIGHT).getAsInt()): -1; 
-		this.spawnMin = jsonObjIn.has(PACK_MIN) ? Math.max(0, jsonObjIn.get(PACK_MIN).getAsInt()): -1; 
-		this.spawnMax = jsonObjIn.has(PACK_MAX) ? Math.max(this.spawnMin, jsonObjIn.get(PACK_MAX).getAsInt()): -1;
-		this.entityType = jsonObjIn.has(ENTITY_TYPE) ? new ResourceLocation(jsonObjIn.get(ENTITY_TYPE).getAsString()) : null;
-		CorviCraftSpawns.getLogger().info("Created spawn set for entity " + this.getEntityType().toString() + " with weight of " +
-				this.weight + ", minimum pack size of " + this.spawnMin + ", and maximum pack size of " +
-				this.spawnMax + " as spawn type " + this.getSpawnType().getName());
+		this.spawnCategory = getSpawnType(CorviUtilities.getJsonElementAsInt(jsonObjIn.get(SPAWN_TYPE), "spawn type"));
+		this.weight = CorviUtilities.getJsonElementAsInt(jsonObjIn.get(SPAWN_WEIGHT), "spawn weight");
+		this.spawnMin = CorviUtilities.getJsonElementAsInt(jsonObjIn.get(PACK_MIN), "pack minimum");
+		this.spawnMax = CorviUtilities.getJsonElementAsInt(jsonObjIn.get(PACK_MAX), "pack maximum");
+		String entityTypeString = null;
+		if (jsonObjIn.has(ENTITY_TYPE)) entityTypeString = CorviUtilities.getJsonElementAsString(jsonObjIn.get(ENTITY_TYPE), "entity type");
+		if (ResourceLocation.isValidResourceLocation(entityTypeString.toLowerCase())) this.entityType = new ResourceLocation(entityTypeString.toLowerCase());
+		else this.entityType = null;
 	}
 	
 	public MobCategory getSpawnType() {return this.spawnCategory;}
@@ -91,15 +91,11 @@ public class CorviSpawnDataEntry {
 	 * Checks the validity conditions for this spawn entry-- invalid spawn entries will not be utilized and in most cases won't be added to spawn maps at all
 	 */
 	public boolean isValidSpawnEntry() {
-		return this.entityType != null;
+		return this.entityType != null && this.weight > 0 && this.spawnMin >= 0 && this.spawnMax > 0;
 	}
 	
-	public void debugDataEntry() {
-		CorviCraftSpawns.getLogger().info("CorviCraft Spawn Data Entry...");
-		CorviCraftSpawns.getLogger().info("Entity: " + this.entityType.toString());
-		CorviCraftSpawns.getLogger().info("Spawn Type: " + this.getSpawnType().toString());
-		CorviCraftSpawns.getLogger().info("Weight: " + this.getWeight());
-		CorviCraftSpawns.getLogger().info("Pack Min: " + this.getSpawnMin());
-		CorviCraftSpawns.getLogger().info("Pack Max: " + this.getSpawnMax());
+	public void logDataEntry() {
+		CorviCraftSpawns.getLogger().debug("CorviCraft Spawn Data Entry: [Entity: " + this.entityType.toString() + ", Spawn Type: " + this.getSpawnType().toString()
+				+ ", Weight: " + this.getWeight() + ", Pack Min: " + this.getSpawnMin() + ",Pack Max: " + this.getSpawnMax() + "]");
 	}
 }

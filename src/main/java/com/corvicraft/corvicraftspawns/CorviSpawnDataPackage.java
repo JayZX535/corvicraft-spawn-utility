@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraftforge.event.world.BiomeLoadingEvent;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -23,7 +24,7 @@ public class CorviSpawnDataPackage {
 	
 	public CorviSpawnDataPackage(CorviSpawnDataEntry[] spawnDataEntriesIn, ResourceLocation biomeIn, boolean overrideExistingIn) {
 		this.spawnDataEntries = spawnDataEntriesIn;
-		this.biomeList  = new ResourceLocation[] {biomeIn};
+		this.biomeList = new ResourceLocation[] {biomeIn};
 		this.overrideExisting = overrideExistingIn;
 	}
 	
@@ -35,18 +36,36 @@ public class CorviSpawnDataPackage {
 	
 	public CorviSpawnDataPackage(JsonObject jsonObjIn) {
 		List <ResourceLocation> biomeListIn = new ArrayList<ResourceLocation>();
-		if (jsonObjIn.has("biome")) biomeListIn.add(new ResourceLocation(jsonObjIn.get("biome").getAsString()));
+		if (jsonObjIn.has("biome")) {
+			ResourceLocation biomeLocation = getStringAsResourceLocation(CorviUtilities.getJsonElementAsString(jsonObjIn.get("biome"), "biome"));
+			if (biomeLocation != null) biomeListIn.add(biomeLocation);
+		}
 		if (jsonObjIn.has("biomes")) {
 			JsonArray biomeArray = jsonObjIn.get("biomes").getAsJsonArray();
-			if (!biomeArray.isEmpty()) for (JsonElement e : biomeArray) biomeListIn.add(new ResourceLocation(e.getAsString()));
+			if (!biomeArray.isEmpty()) for (JsonElement e : biomeArray) {
+				ResourceLocation biomeLocation = getStringAsResourceLocation(CorviUtilities.getJsonElementAsString(e, "biome"));
+				if (biomeLocation != null) biomeListIn.add(biomeLocation);
+			}
 		}
 		
 		CorviCraftSpawns.getLogger().info("Loading spawns for biomes " + biomeListIn.toString());
 		
 		List <CorviSpawnDataEntry> spawnsIn = new ArrayList<CorviSpawnDataEntry>();
 		if (jsonObjIn.has("spawns")) {
-			JsonArray spawnsArray = jsonObjIn.get("spawns").getAsJsonArray();
-			if (!spawnsArray.isEmpty()) for (JsonElement e : spawnsArray) spawnsIn.add(new CorviSpawnDataEntry(e.getAsJsonObject()));
+			try {
+				JsonArray spawnsArray = jsonObjIn.get("spawns").getAsJsonArray();
+				if (!spawnsArray.isEmpty()) for (JsonElement e : spawnsArray) {
+					try {
+						spawnsIn.add(new CorviSpawnDataEntry(e.getAsJsonObject()));
+					} catch (IllegalStateException error) {
+		    			CorviCraftSpawns.getLogger().warn("Provided spawn element was of the wrong type!");
+		    			error.printStackTrace();
+		    		}
+				}
+    		} catch (IllegalStateException e) {
+    			CorviCraftSpawns.getLogger().warn("Provided spawns array was of the wrong type!");
+    			e.printStackTrace();
+    		}
 		}
 		
 		CorviSpawnDataEntry[] spawnsInArr = new CorviSpawnDataEntry[spawnsIn.size()];
@@ -57,27 +76,29 @@ public class CorviSpawnDataPackage {
 		biomeListIn.toArray(biomeListArr);
 		this.biomeList = biomeListArr;
 		
-		if (jsonObjIn.has("override_existing_entries")) this.overrideExisting = jsonObjIn.get("override_existing_entries").getAsBoolean();
-		else this.overrideExisting = false;
+		this.overrideExisting = false;
+		if (jsonObjIn.has("override_existing_entries")) {
+			try {
+				this.overrideExisting = jsonObjIn.get("override_existing_entries").getAsBoolean();
+    		} catch (ClassCastException e) {
+    			CorviCraftSpawns.getLogger().warn("Provided override existing entries value was not a boolean!");
+				e.printStackTrace();
+    		} catch (IllegalStateException e) {
+    			CorviCraftSpawns.getLogger().warn("Provided override existing entries value had too many elements!");
+    			e.printStackTrace();
+    		}
+		}
 	}
 	
-	public boolean overrideExistingEntries() {
-		return this.overrideExisting;
-	}
+	public boolean overrideExistingEntries() { return this.overrideExisting; }
 	
-	public CorviSpawnDataEntry[] getSpawnDataEntries() {
-		return this.spawnDataEntries;
-	}
+	public CorviSpawnDataEntry[] getSpawnDataEntries() { return this.spawnDataEntries; }
 	
-	private boolean isEqual(CorviSpawnDataEntry[] spawnDataEntriesIn) {
-		return Arrays.equals(this.spawnDataEntries, spawnDataEntriesIn);
-	}
+	private boolean isEqual(CorviSpawnDataEntry[] spawnDataEntriesIn) { return Arrays.equals(this.spawnDataEntries, spawnDataEntriesIn); }
 	
 	private void appendBiome(ResourceLocation biomeIn) {
 		ResourceLocation[] biomeListNew = new ResourceLocation[this.biomeList.length + 1];
-		for (int i = 0; i < this.biomeList.length; i++) {
-			biomeListNew[i] = this.biomeList[i];
-		}
+		for (int i = 0; i < this.biomeList.length; i++) biomeListNew[i] = this.biomeList[i];
 		biomeListNew[biomeListNew.length - 1] = biomeIn;
 		this.biomeList = biomeListNew;
 	}
@@ -92,9 +113,7 @@ public class CorviSpawnDataPackage {
 		return containsBiome;
 	}
 	
-	public ResourceLocation[] getBiomes() {
-		return this.biomeList;
-	}
+	public ResourceLocation[] getBiomes() { return this.biomeList; }
 	
 	public boolean appendIfValid(CorviSpawnDataEntry[] spawnDataEntriesIn, ResourceLocation biomeIn) {
 		if (this.isEqual(spawnDataEntriesIn) && !this.containsBiome(biomeIn)) {
@@ -138,24 +157,26 @@ public class CorviSpawnDataPackage {
 	
 	public void addSpawnEntries(BiomeLoadingEvent eventIn) {
 		for (int i = 0; i < this.spawnDataEntries.length; i++) {
-			EntityType<?> entityType = ForgeRegistries.ENTITIES.getValue(this.spawnDataEntries[i].getEntityType());
-			if (entityType != null) eventIn.getSpawns().getSpawner(this.spawnDataEntries[i].getSpawnType())
-					.add(new MobSpawnSettings.SpawnerData(entityType,
-					this.spawnDataEntries[i].getWeight(),
-					this.spawnDataEntries[i].getSpawnMin(),
-					this.spawnDataEntries[i].getSpawnMax()));
+			if (ForgeRegistries.ENTITIES.containsKey(this.spawnDataEntries[i].getEntityType())) eventIn.getSpawns().getSpawner(this.spawnDataEntries[i].getSpawnType())
+					.add(new MobSpawnSettings.SpawnerData(ForgeRegistries.ENTITIES.getValue(this.spawnDataEntries[i].getEntityType()), this.spawnDataEntries[i].getWeight(), this.spawnDataEntries[i].getSpawnMin(), this.spawnDataEntries[i].getSpawnMax()));
+			else CorviCraftSpawns.getLogger().warn("Entity type " + this.spawnDataEntries[i].getEntityType().toString() + " was not found in Forge registry, skipping...");
 		}
 	}
 	
-	public void debugDataPackage() {
-		CorviCraftSpawns.getLogger().info("CorviCraft Spawn Data Package Contains...");
-		CorviCraftSpawns.getLogger().info("Biomes: " + this.biomeList.toString());
-		CorviCraftSpawns.getLogger().info("Entries: ");
-		for (int i = 0; i < this.spawnDataEntries.length; i++) this.spawnDataEntries[i].debugDataEntry();
-		CorviCraftSpawns.getLogger().info("Override Existing? " + this.overrideExisting);	
+	public void logDataPackage() {
+		CorviCraftSpawns.getLogger().debug("CorviCraft Spawn Data Package Containing...");
+		CorviCraftSpawns.getLogger().debug("Biomes: ");
+		for (int i = 0; i< this.biomeList.length; i ++) CorviCraftSpawns.getLogger().debug(this.biomeList[i].toString());
+		CorviCraftSpawns.getLogger().debug("Entries: ");
+		for (int i = 0; i < this.spawnDataEntries.length; i++) this.spawnDataEntries[i].logDataEntry();
+		CorviCraftSpawns.getLogger().debug("Override Existing? " + this.overrideExisting);	
 	}
 	
-	public boolean isValid() {
-		return this.biomeList.length > 0;
+	public boolean isValid() { return this.biomeList.length > 0; }
+	
+	@Nullable
+	private static ResourceLocation getStringAsResourceLocation(String stringIn) {
+		if (stringIn != null) if (ResourceLocation.isValidResourceLocation(stringIn.toLowerCase())) return new ResourceLocation(stringIn.toLowerCase());
+		return null;
 	}
 }
