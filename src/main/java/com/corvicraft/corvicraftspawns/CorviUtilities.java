@@ -24,10 +24,10 @@ public class CorviUtilities {
 	}
 	
 	@Nullable
-    public static String getJsonElementAsString(JsonElement elementIn, String elementName) {
-    	String jsonElement = null;
-    	try {
-    		jsonElement = elementIn.getAsString();
+	public static String getJsonElementAsString(JsonElement elementIn, String elementName) {
+		String jsonElement = null;
+		try {
+			jsonElement = elementIn.getAsString();
 		} catch (ClassCastException e) {
 			CorviCraftSpawns.getLogger().warn("Provided " + elementName + " was not a string!");
 			e.printStackTrace();
@@ -35,6 +35,6 @@ public class CorviUtilities {
 			CorviCraftSpawns.getLogger().warn("Provided " + elementName + " had too many elements!");
 			e.printStackTrace();
 		}
-    	return jsonElement;
-    }
+		return jsonElement;
+	}
 }
