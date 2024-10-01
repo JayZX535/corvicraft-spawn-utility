@@ -3,12 +3,12 @@ loaderVersion="[40,)" #mandatory This is typically bumped every Minecraft versio
 license="All rights reserved"
 [[mods]]
 modId="corvicraftspawns"
-version="1.0"
+version="2.0"
 displayName="CorviCraft Spawn Utility"
 logoFile="CCLogo.png"
 authors="JayZX535"
 description='''
-CorviCraft Spawns adds a flexible and versatile json-based spawning system to allow entities to be spawned in any biome, modded or vanilla.
+CorviCraft Spawn Utility adds a flexible and versatile json-based spawning system to allow entities to be spawned in any biome, modded or vanilla.
 
 Not sure why this mod is in your pack?  It was probably added by another mod that relies on it for spawns configuration.  If you're certain none of your other mods need it, you can safely remove it, as on its own it only provides configuration for vanilla spawns.
 '''
