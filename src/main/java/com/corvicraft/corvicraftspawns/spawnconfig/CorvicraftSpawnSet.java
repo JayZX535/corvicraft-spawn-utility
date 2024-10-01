@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import com.corvicraft.corvicraftspawns.CorviCraftSpawns;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -45,25 +47,25 @@ public class CorvicraftSpawnSet {
 		}
 	}
 	
-	protected boolean isValidEntityType(ResourceLocation testTypeIn, List<EntityType<?>> validTypesIn) {
+	public boolean isValidEntityType(ResourceLocation testTypeIn, List<EntityType<?>> validTypesIn) {
 		if (testTypeIn == null) {
-			CorviCraftSpawns.getLogger().warn("Cannot add spawns for null entity type!");
+			CorviCraftSpawns.getLogger().warn("Provided entity type was null!");
 			return false;
 		}
 		if (ForgeRegistries.ENTITIES.containsKey(testTypeIn)) {
 			EntityType<?> testType = ForgeRegistries.ENTITIES.getValue(testTypeIn);
 			if (validTypesIn.contains(testType)) return true;
 			else CorviCraftSpawns.getLogger().warn("Entity type " + testTypeIn.toString() + " is not controlled by this mod's spawn set!");
-		} else CorviCraftSpawns.getLogger().warn("Entity type " + testTypeIn.toString() + " was not found in Forge registry, skipping!");
+		} else CorviCraftSpawns.getLogger().warn("Entity type " + testTypeIn.toString() + " was not found in Forge registry!");
 		return false;
 	}
 	
-	public static Optional<CorvicraftSpawnSet> readFromJson(String nameIn, JsonObject jsonObjIn) { 
+	public static Optional<CorvicraftSpawnSet> readFromJson(String nameIn, JsonObject jsonObjIn, @Nonnull CorvicraftSpawnEntry dummyIn) { 
 		if (jsonObjIn.has(SPAWNS)) {
 			JsonArray spawns = jsonObjIn.getAsJsonArray(SPAWNS);
 			List<CorvicraftSpawnEntry> spawnEntries = new LinkedList<>();
 			for (JsonElement spawn : spawns) {
-				Optional<CorvicraftSpawnEntry> entry = CorvicraftSpawnEntry.readJson(spawn.getAsJsonObject());
+				Optional<CorvicraftSpawnEntry> entry = dummyIn.fromJson(spawn.getAsJsonObject());
 				if (!entry.isEmpty()) spawnEntries.add(entry.get());
 			}
 			boolean replaceExisting = false;

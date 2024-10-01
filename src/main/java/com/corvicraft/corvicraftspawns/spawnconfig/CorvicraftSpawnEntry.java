@@ -14,6 +14,8 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 public class CorvicraftSpawnEntry {
 
+	public static final CorvicraftSpawnEntry DUMMY = new CorvicraftSpawnEntry(new ResourceLocation("dummy:dummy"), 0, 0, 0);
+	
 	public static final String ENTITY_TYPE = "entity_type";
 	public static final String WEIGHT = "weight";
 	public static final String PACK_MIN = "pack_min";
@@ -107,11 +109,11 @@ public class CorvicraftSpawnEntry {
 	}
 	
 	public static class Builder {
-		private final ResourceLocation entityType;
-		private int weight = 0;
-		private int packMin = 0;
-		private int packMax = 0;
-		private Optional<MobCategory> spawnCategory = Optional.empty();
+		protected final ResourceLocation entityType;
+		protected int weight = 0;
+		protected int packMin = 0;
+		protected int packMax = 0;
+		protected Optional<MobCategory> spawnCategory = Optional.empty();
 		
 		public Builder(ResourceLocation entityTypeIn) {
 			this.entityType = entityTypeIn;

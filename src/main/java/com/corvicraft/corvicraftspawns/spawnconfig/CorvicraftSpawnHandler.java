@@ -31,6 +31,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.event.world.BiomeLoadingEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 
 public class CorvicraftSpawnHandler {
 	
@@ -273,7 +274,34 @@ public class CorvicraftSpawnHandler {
 	}
 	
 	protected Optional<CorvicraftSpawnSet> getSpawnSetFromJson(String nameIn, JsonObject jsonObj) {
-		return CorvicraftSpawnSet.readFromJson(nameIn, jsonObj);
+		return CorvicraftSpawnSet.readFromJson(nameIn, jsonObj, CorvicraftSpawnEntry.DUMMY);
+	}
+	
+	public boolean hasSpawnSets() {
+		return !this.spawnSets.isEmpty();
+	}
+	
+	public Optional<CorvicraftSpawnSet> getSetForBiome(Biome biomeIn) {
+		if (biomeIn != null) return this.getSetForBiome(biomeIn.getRegistryName());
+		return Optional.empty();
+	}
+	
+	public Optional<CorvicraftSpawnSet> getSetForBiome(ResourceLocation biomeLocationIn) {
+		if (biomeLocationIn != null && this.spawnSets.containsKey(biomeLocationIn)) return Optional.of(this.spawnSets.get(biomeLocationIn));
+		return Optional.empty();
+	}
+	
+	public boolean isValidEntityType(ResourceLocation testTypeIn) {
+		if (testTypeIn == null) {
+			CorviCraftSpawns.getLogger().warn("Provided entity type was null!");
+			return false;
+		}
+		if (ForgeRegistries.ENTITIES.containsKey(testTypeIn)) {
+			EntityType<?> testType = ForgeRegistries.ENTITIES.getValue(testTypeIn);
+			if (this.validEntityTypes.contains(testType)) return true;
+			else CorviCraftSpawns.getLogger().warn("Entity type " + testTypeIn.toString() + " is not controlled by this mod's spawn set!");
+		} else CorviCraftSpawns.getLogger().warn("Entity type " + testTypeIn.toString() + " was not found in Forge registry!");
+		return false;
 	}
 	
 	public boolean shouldLogDebugData() { 
@@ -283,8 +311,8 @@ public class CorvicraftSpawnHandler {
 	public static class Builder {
 		
 		public final String modid;
-		private final Map<CorvicraftSpawnSet, ResourceLocation[]> defaultSpawnSets = new HashMap<>();
-		private final List<EntityType<?>> validEntityTypes = new LinkedList<>();
+		protected final Map<CorvicraftSpawnSet, ResourceLocation[]> defaultSpawnSets = new HashMap<>();
+		protected final List<EntityType<?>> validEntityTypes = new LinkedList<>();
 		
 		public Builder (String modIdIn) {
 			this.modid = modIdIn;

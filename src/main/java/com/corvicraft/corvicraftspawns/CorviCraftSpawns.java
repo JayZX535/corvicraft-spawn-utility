@@ -4,11 +4,8 @@ import com.corvicraft.corvicraftspawns.config.CorvicraftConfig;
 import com.corvicraft.corvicraftspawns.spawnconfig.CorvicraftSpawnEntry;
 import com.corvicraft.corvicraftspawns.spawnconfig.CorvicraftSpawnHandler;
 import com.corvicraft.corvicraftspawns.spawnconfig.CorvicraftSpawnSet;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 import com.mojang.logging.LogUtils;
 
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biomes;
@@ -61,9 +58,14 @@ public class CorviCraftSpawns
     public class CorviCraftEvents {
     	
     	@SubscribeEvent
-    	 public static void loadConfig(ModConfigEvent.Loading eventIn) {
+    	public static void loadConfig(ModConfigEvent.Loading eventIn) {
     		HANDLER.loadSpawns();
-    	 }
+    	}
+    	
+    	@SubscribeEvent
+    	public static void reloadConfig(ModConfigEvent.Reloading eventIn) {
+    		HANDLER.loadSpawns();
+    	}
     }
     
     public static Path getConfigPath() {return configPath;}
@@ -188,7 +190,7 @@ public class CorviCraftSpawns
         		new CorvicraftSpawnEntry.Builder(EntityType.DOLPHIN).withWeight(2).withPackMin(1).withPackMax(2).withSpawnCategory(MobCategory.WATER_CREATURE).build()
     		).withSpawns(darkDefaults).replaceExisting(true).build(), Biomes.DEEP_LUKEWARM_OCEAN)
     		.withSpawnSet(new CorvicraftSpawnSet.Builder("desert").withSpawns(
-            	new CorvicraftSpawnEntry.Builder(EntityType.RABBIT).withWeight(4).withPackMin(2).withPackMax(3).withSpawnCategory(MobCategory.WATER_AMBIENT).build(),
+            	new CorvicraftSpawnEntry.Builder(EntityType.RABBIT).withWeight(4).withPackMin(2).withPackMax(3).withSpawnCategory(MobCategory.CREATURE).build(),
             	new CorvicraftSpawnEntry.Builder(EntityType.BAT).withWeight(10).withPackSize(8).withSpawnCategory(MobCategory.AMBIENT).build(),
         		new CorvicraftSpawnEntry.Builder(EntityType.SPIDER).withWeight(100).withPackSize(4).withSpawnCategory(MobCategory.MONSTER).build(),
         		new CorvicraftSpawnEntry.Builder(EntityType.ZOMBIE).withWeight(19).withPackSize(4).withSpawnCategory(MobCategory.MONSTER).build(),
