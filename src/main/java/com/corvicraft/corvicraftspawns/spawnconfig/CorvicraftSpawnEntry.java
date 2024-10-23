@@ -117,7 +117,7 @@ public class CorvicraftSpawnEntry {
 	
 	public void logDataEntry() {
 		if (!this.getEntityType().isEmpty()) CorviCraftSpawns.getLogger().debug("CorviCraft Spawn Entry: [Entity: " + this.getEntityType().get().toString()
-			+ ", Spawn Type: " + this.getSpawnCategory() + ", Weight: " + this.weight + ", Pack Min: " + this.packMin + ", Pack Max: " + this.packMax + "]");
+			+ ", Spawn Type: " + this.getSpawnCategory() + ", Weight: " + this.weight + ", Pack Min: " + this.packMin + ", Pack Max: " + this.packMax + "], " + this.rarityModifiers.getDebugString());
 		else CorviCraftSpawns.getLogger().debug("CorviCraft Spawn Entry: INVALID (Null Entity Type)");
 	}
 	

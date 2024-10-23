@@ -56,6 +56,31 @@ public class RarityModifiers {
 			: firstRarityIn < secondRarityIn ? ((secondRarityIn - firstRarityIn) / 2) + firstRarityIn : firstRarityIn;
 	}
 	
+	public String getDebugString() { return "[Base Rarity: " + this.baseRarity + "], " + this.moonRarity.getDebugString() + ", " + this.weatherRarity.getDebugString(); }
+	
+	public static class Builder {
+		
+		protected double base = 1.0;
+		protected MoonRarity moon = MoonRarity.NONE;
+		protected WeatherRarity weather = WeatherRarity.NONE;
+		
+		public Builder withBaseRarity(double rarityIn) {
+			this.base = Mth.clamp(rarityIn, 0D, 1D);
+			return this;
+		}
+		public Builder withMoonRarity(MoonRarity moonRarityIn) {
+			if (moonRarityIn != null) this.moon = moonRarityIn;
+			return this;
+		}
+		
+		public Builder withWeatherRarity(WeatherRarity weatherRarityIn) {
+			if (weatherRarityIn != null) this.weather = weatherRarityIn;
+			return this;
+		}
+		
+		public RarityModifiers build() { return new RarityModifiers(this.base, this.moon, this.weather); }
+	}
+	
 	public record MoonRarity(double fullMoon, double waningGibbous, double lastQuarter, double waningCrescent, double newMoon, double waxingCrescent, double firstQuarter, double waxingGibbous) {
 		
 		public static final MoonRarity NONE = new MoonRarity(1D, 1D, 1D, 1D, 1D, 1D, 1D, 1D);
@@ -123,6 +148,10 @@ public class RarityModifiers {
 			}
 			return modified ? Optional.of(jsonObj) : Optional.empty();
 		}
+		
+		public String getDebugString() { return "[Moon Rarities: " + this.fullMoon + " (full), " + this.waningGibbous + " (waning gibbous), " 
+			+ this.lastQuarter + " (last quarter), " + this.waningCrescent + " (waning crescent), " + this.newMoon + " (new), "
+			+ this.waxingCrescent + " (waxing crescent), " + this.firstQuarter + " (first quarter), " + this.waxingGibbous + " (waxing gibbous)]"; }
 		
 		public static class Builder {
 			protected double fullMoon = 1.0D;
@@ -217,6 +246,8 @@ public class RarityModifiers {
 			}
 			return modified ? Optional.of(jsonObj) : Optional.empty();
 		}
+		
+		public String getDebugString() { return "[Weather Rarities: " + this.clear + " (clear), " + this.rain + " (rain), " + this.thunderstorm + " (thunderstorm)]"; }
 		
 		public static class Builder {
 			protected double clear = 1D;
