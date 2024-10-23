@@ -21,55 +21,67 @@ public class CorvicraftSpawnEntry {
 	public static final String PACK_MIN = "pack_min";
 	public static final String PACK_MAX = "pack_max";
 	public static final String SPAWN_CATEGORY = "spawn_category";
+	public static final String RARITY_MODIFIERS = "rarity_modifiers";
 	
 	public final int weight;
 	public final int packMin;
 	public final int packMax;
 	public final ResourceLocation entityType;
-	private final Optional<MobCategory> spawnCategory;
+	protected final RarityModifiers rarityModifiers;
+	protected final Optional<MobCategory> spawnCategory;
 	
-	public CorvicraftSpawnEntry(ResourceLocation entityTypeIn, int weightIn, int packMinIn, int packMaxIn, Optional<MobCategory> categoryIn) {
+	public CorvicraftSpawnEntry(ResourceLocation entityTypeIn, int weightIn, int packMinIn, int packMaxIn, RarityModifiers rarityModifiersIn, Optional<MobCategory> categoryIn) {
 		this.entityType = entityTypeIn;
 		this.weight = weightIn;
 		this.packMin = packMinIn;
 		this.packMax = packMaxIn;
+		this.rarityModifiers = rarityModifiersIn;
 		this.spawnCategory = categoryIn;
 	}
 	
+	public CorvicraftSpawnEntry(ResourceLocation entityTypeIn, int weightIn, int packMinIn, int packMaxIn, RarityModifiers rarityModifiersIn) {
+		this(entityTypeIn, weightIn, packMinIn, packMaxIn, rarityModifiersIn, Optional.empty());
+	}
+	
 	public CorvicraftSpawnEntry(ResourceLocation entityTypeIn, int weightIn, int packMinIn, int packMaxIn) {
-		this(entityTypeIn, weightIn, packMinIn, packMaxIn, Optional.empty());
+		this(entityTypeIn, weightIn, packMinIn, packMaxIn, RarityModifiers.NONE);
 	}
 	
 	public MobSpawnSettings.SpawnerData getSpawnerData() {
 		return new MobSpawnSettings.SpawnerData(ForgeRegistries.ENTITIES.getValue(this.entityType), this.weight, this.packMin, this.packMax);
 	}
 	
-	public static Optional<CorvicraftSpawnEntry> readJson(JsonObject jsonObjIn) {
-		if (jsonObjIn.has(ENTITY_TYPE)) {
-			Builder entryBuilder = new Builder(new ResourceLocation(jsonObjIn.get(ENTITY_TYPE).getAsString()));
-			if (jsonObjIn.has(WEIGHT)) entryBuilder.withWeight(GsonHelper.getAsInt(jsonObjIn, WEIGHT));
-			if (jsonObjIn.has(PACK_MIN)) entryBuilder.withPackMin(GsonHelper.getAsInt(jsonObjIn, PACK_MIN));
-			if (jsonObjIn.has(PACK_MAX)) entryBuilder.withPackMax(GsonHelper.getAsInt(jsonObjIn, PACK_MAX));
-			if (jsonObjIn.has(SPAWN_CATEGORY)) {
-				int category = GsonHelper.getAsInt(jsonObjIn, SPAWN_CATEGORY);
-				switch (category) {
-					default: entryBuilder.withSpawnCategory(MobCategory.CREATURE); break;
-					case 1: entryBuilder.withSpawnCategory(MobCategory.MONSTER); break;
-					case 2: entryBuilder.withSpawnCategory(MobCategory.AMBIENT); break;
-					case 3: entryBuilder.withSpawnCategory(MobCategory.AXOLOTLS); break;
-					case 4: entryBuilder.withSpawnCategory(MobCategory.UNDERGROUND_WATER_CREATURE); break;
-					case 5: entryBuilder.withSpawnCategory(MobCategory.WATER_CREATURE); break;
-					case 6: entryBuilder.withSpawnCategory(MobCategory.WATER_AMBIENT); break;
-					case 7: entryBuilder.withSpawnCategory(MobCategory.MISC); break;
-				}
-			}
+	public static Optional<CorvicraftSpawnEntry> readJson(JsonObject jsonIn) {
+		if (jsonIn.has(ENTITY_TYPE)) {
+			Builder entryBuilder = new Builder(new ResourceLocation(jsonIn.get(ENTITY_TYPE).getAsString()));
+			readJsonToSpawnEntryBuilder(entryBuilder, jsonIn);
+			if (jsonIn.has(RARITY_MODIFIERS)) entryBuilder.withRarityModifiers(RarityModifiers.readJson(jsonIn.get(RARITY_MODIFIERS).getAsJsonObject()));
 			return Optional.of(entryBuilder.build());
 		} else CorviCraftSpawns.getLogger().warn("Tried to load spawn entry from Json, but entry has no entity type!");
 		return Optional.empty();
 	}
 	
+	protected static void readJsonToSpawnEntryBuilder(Builder builderIn, JsonObject jsonIn) {
+		if (jsonIn.has(WEIGHT)) builderIn.withWeight(GsonHelper.getAsInt(jsonIn, WEIGHT));
+		if (jsonIn.has(PACK_MIN)) builderIn.withPackMin(GsonHelper.getAsInt(jsonIn, PACK_MIN));
+		if (jsonIn.has(PACK_MAX)) builderIn.withPackMax(GsonHelper.getAsInt(jsonIn, PACK_MAX));
+		if (jsonIn.has(SPAWN_CATEGORY)) {
+			int category = GsonHelper.getAsInt(jsonIn, SPAWN_CATEGORY);
+			switch (category) {
+				default: builderIn.withSpawnCategory(MobCategory.CREATURE); break;
+				case 1: builderIn.withSpawnCategory(MobCategory.MONSTER); break;
+				case 2: builderIn.withSpawnCategory(MobCategory.AMBIENT); break;
+				case 3: builderIn.withSpawnCategory(MobCategory.AXOLOTLS); break;
+				case 4: builderIn.withSpawnCategory(MobCategory.UNDERGROUND_WATER_CREATURE); break;
+				case 5: builderIn.withSpawnCategory(MobCategory.WATER_CREATURE); break;
+				case 6: builderIn.withSpawnCategory(MobCategory.WATER_AMBIENT); break;
+				case 7: builderIn.withSpawnCategory(MobCategory.MISC); break;
+			}
+		}
+	}
+	
 	/** Used to permit subclasses to do their own reading */
-	public Optional<CorvicraftSpawnEntry> fromJson(JsonObject jsonObjIn) { return readJson(jsonObjIn); }
+	public Optional<CorvicraftSpawnEntry> fromJson(JsonObject jsonIn) { return readJson(jsonIn); }
 	
 	public JsonObject toJson() {
 		JsonObject jsonObj = new JsonObject();
@@ -89,6 +101,7 @@ public class CorvicraftSpawnEntry {
 				case MISC: jsonObj.addProperty(SPAWN_CATEGORY, 7); break;
 			}
 		}
+		this.rarityModifiers.toJson(jsonObj);
 		return jsonObj;
 	}
 	
@@ -104,7 +117,7 @@ public class CorvicraftSpawnEntry {
 	
 	public void logDataEntry() {
 		if (!this.getEntityType().isEmpty()) CorviCraftSpawns.getLogger().debug("CorviCraft Spawn Entry: [Entity: " + this.getEntityType().get().toString()
-			+ ", Spawn Type: " + this.getSpawnCategory() + ", Weight: " + this.weight + ", Pack Min: " + this.packMin + ",Pack Max: " + this.packMax + "]");
+			+ ", Spawn Type: " + this.getSpawnCategory() + ", Weight: " + this.weight + ", Pack Min: " + this.packMin + ", Pack Max: " + this.packMax + "]");
 		else CorviCraftSpawns.getLogger().debug("CorviCraft Spawn Entry: INVALID (Null Entity Type)");
 	}
 	
@@ -113,6 +126,7 @@ public class CorvicraftSpawnEntry {
 		protected int weight = 0;
 		protected int packMin = 0;
 		protected int packMax = 0;
+		protected RarityModifiers rarityModifiers = RarityModifiers.NONE;
 		protected Optional<MobCategory> spawnCategory = Optional.empty();
 		
 		public Builder(ResourceLocation entityTypeIn) {
@@ -140,6 +154,10 @@ public class CorvicraftSpawnEntry {
 			this.packMax = this.packMin;
 			return this;
 		}
+		public Builder withRarityModifiers(RarityModifiers rarityModifiersIn) { 
+			if (rarityModifiersIn != null) this.rarityModifiers = rarityModifiersIn;
+			return this;
+		}
 		public Builder withSpawnCategory(MobCategory categoryIn) {
 			if (categoryIn != null) this.spawnCategory = Optional.of(categoryIn);
 			else this.spawnCategory = Optional.empty();
@@ -147,7 +165,7 @@ public class CorvicraftSpawnEntry {
 		}
 		
 		public CorvicraftSpawnEntry build() {
-			return new CorvicraftSpawnEntry(this.entityType, this.weight, this.packMin, Math.max(this.packMin, this.packMax), this.spawnCategory);
+			return new CorvicraftSpawnEntry(this.entityType, this.weight, this.packMin, Math.max(this.packMin, this.packMax), this.rarityModifiers, this.spawnCategory);
 		}
 	}
 }

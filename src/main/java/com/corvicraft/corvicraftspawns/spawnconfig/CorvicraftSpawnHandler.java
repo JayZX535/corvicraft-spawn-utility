@@ -142,8 +142,11 @@ public class CorvicraftSpawnHandler {
 					    		}
 								
 								if (biomes.isEmpty()) CorviCraftSpawns.getLogger().debug(this.modid + " provided a spawn set that has no biome list and cannot be used!");
-								else if (!spawnSetMap.containsKey(setName)) CorviCraftSpawns.getLogger().debug(this.modid + " provided a spawn set with an invalid set key that cannot be used!  Make sure all of your set keys correspond to the name of a file.");
-								else for (ResourceLocation biome : biomes) this.spawnSets.put(biome, spawnSetMap.get(setName));
+								if (!spawnSetMap.containsKey(setName)) CorviCraftSpawns.getLogger().debug(this.modid + " provided a spawn set with an invalid set key that cannot be used!  Make sure all of your set keys correspond to the name of a file.");
+								else {
+									this.spawnSets.clear();
+									for (ResourceLocation biome : biomes) this.spawnSets.put(biome, spawnSetMap.get(setName));
+								}
 							}
 						}
 					}
