@@ -118,15 +118,15 @@ public class RarityModifiers {
 				jsonObj.addProperty("full", Math.max(this.fullMoon, 0D));
 				modified = true;
 			}
-			if (this.waningGibbous < 1D) {
+			if (this.waningGibbous < 1D && this.waningGibbous != getMidpointRarity(this.fullMoon, this.lastQuarter)) {
 				jsonObj.addProperty("waning_gibbous", Math.max(this.waningGibbous, 0D));
 				modified = true;
 			}
-			if (this.lastQuarter < 1D) {
+			if (this.lastQuarter < 1D && this.lastQuarter != getMidpointRarity(this.fullMoon, this.newMoon)) {
 				jsonObj.addProperty("last_quarter", Math.max(this.lastQuarter, 0D));
 				modified = true;
 			}
-			if (this.waningCrescent < 1D) {
+			if (this.waningCrescent < 1D && this.waningCrescent != getMidpointRarity(this.lastQuarter, this.newMoon)) {
 				jsonObj.addProperty("waning_crescent", Math.max(this.waningCrescent, 0D));
 				modified = true;
 			}
@@ -134,15 +134,15 @@ public class RarityModifiers {
 				jsonObj.addProperty("new", Math.max(this.newMoon, 0D));
 				modified = true;
 			}
-			if (this.waxingCrescent < 1D) {
+			if (this.waxingCrescent < 1D && this.waxingCrescent != getMidpointRarity(this.firstQuarter, this.newMoon)) {
 				jsonObj.addProperty("waxing_crescent", Math.max(this.waxingCrescent, 0D));
 				modified = true;
 			}
-			if (this.firstQuarter < 1D) {
+			if (this.firstQuarter < 1D && this.firstQuarter != getMidpointRarity(this.fullMoon, this.newMoon)) {
 				jsonObj.addProperty("first_quarter", Math.max(this.firstQuarter, 0D));
 				modified = true;
 			}
-			if (this.waxingGibbous < 1D) {
+			if (this.waxingGibbous < 1D && this.waxingGibbous != getMidpointRarity(this.firstQuarter, this.fullMoon)) {
 				jsonObj.addProperty("waxing_gibbous", Math.max(this.waxingGibbous, 0D));
 				modified = true;
 			}

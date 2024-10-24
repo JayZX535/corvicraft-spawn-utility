@@ -27,8 +27,8 @@ public class CorvicraftSpawnEntry {
 	public final int packMin;
 	public final int packMax;
 	public final ResourceLocation entityType;
-	protected final RarityModifiers rarityModifiers;
-	protected final Optional<MobCategory> spawnCategory;
+	public final RarityModifiers rarityModifiers;
+	public final Optional<MobCategory> spawnCategory;
 	
 	public CorvicraftSpawnEntry(ResourceLocation entityTypeIn, int weightIn, int packMinIn, int packMaxIn, RarityModifiers rarityModifiersIn, Optional<MobCategory> categoryIn) {
 		this.entityType = entityTypeIn;
@@ -101,7 +101,9 @@ public class CorvicraftSpawnEntry {
 				case MISC: jsonObj.addProperty(SPAWN_CATEGORY, 7); break;
 			}
 		}
-		this.rarityModifiers.toJson(jsonObj);
+		JsonObject rarityModifiers = new JsonObject();
+		this.rarityModifiers.toJson(rarityModifiers);
+		jsonObj.add(RARITY_MODIFIERS, rarityModifiers);
 		return jsonObj;
 	}
 	
