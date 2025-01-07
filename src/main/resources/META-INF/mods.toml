@@ -12,9 +12,3 @@ CorviCraft Spawn Utility adds a flexible and versatile json-based spawning syste
 
 Not sure why this mod is in your pack?  It was probably added by another mod that relies on it for spawns configuration.  If you're certain none of your other mods need it, you can safely remove it, as on its own it only provides configuration for vanilla spawns.
 '''
-[[dependencies.corvicraftspawns]]
-    modId="byg"
-    mandatory=false
-    versionRange="[1.4]"
-    ordering="AFTER"
-    side="SERVER"
