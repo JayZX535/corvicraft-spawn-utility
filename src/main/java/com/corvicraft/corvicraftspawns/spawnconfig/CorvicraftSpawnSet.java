@@ -40,6 +40,11 @@ public class CorvicraftSpawnSet {
 		return spawnEntries;
 	}
 	
+	public Optional<CorvicraftSpawnEntry> getEntryForType(EntityType<?> entityIn) {
+		for (CorvicraftSpawnEntry entry : this.spawnEntries) if (!entry.getEntityType().isEmpty() && entry.getEntityType().get().equals(entityIn))  return Optional.of(entry);
+		return Optional.empty();
+	}
+	
 	public void addSpawnEntries(BiomeLoadingEvent eventIn, List<EntityType<?>> validTypesIn) {
 		for (int i = 0; i < this.spawnEntries.size(); i++) {
 			CorvicraftSpawnEntry activeEntry = this.spawnEntries.get(i);

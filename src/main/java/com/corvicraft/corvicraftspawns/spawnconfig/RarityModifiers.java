@@ -26,12 +26,24 @@ public class RarityModifiers {
 		this.moonRarity = moonRarityIn;
 		this.weatherRarity = weatherRarityIn;
 	}
+	
+	public RarityModifiers(double baseRarityIn, MoonRarity moonRarityIn) {
+		this(baseRarityIn, moonRarityIn, WeatherRarity.NONE);
+	}
+	
+	public RarityModifiers(double baseRarityIn, WeatherRarity weatherRarityIn) {
+		this(baseRarityIn, MoonRarity.NONE, weatherRarityIn);
+	}
+	
+	public RarityModifiers(double baseRarityIn) {
+		this(baseRarityIn, MoonRarity.NONE, WeatherRarity.NONE);
+	}
 
 	public double getLocalRarity(ServerLevel serverLevelIn, BlockPos spawnPosIn) {
 		double localRarity = this.baseRarity;
 		if (serverLevelIn != null) {
 			localRarity *= this.moonRarity.getRarityForPhase(serverLevelIn.getMoonPhase());
-			localRarity *= this.weatherRarity.getRarityForWeather(serverLevelIn);
+			localRarity *= this.weatherRarity.getRarityForWeather(serverLevelIn, spawnPosIn);
 		}
 		return localRarity;
 	}
@@ -209,12 +221,6 @@ public class RarityModifiers {
 	
 	public record WeatherRarity(double clear, double rain, double thunderstorm) {
 		public static final WeatherRarity NONE = new WeatherRarity(1D, 1D, 1D);
-		
-		public double getRarityForWeather(ServerLevel serverLevelIn) {
-			if (serverLevelIn.isThundering()) return this.thunderstorm;
-			else if (serverLevelIn.isRaining()) return this.rain;
-			else return this.clear;
-		}
 		
 		public double getRarityForWeather(ServerLevel serverLevelIn, BlockPos spawnPosIn) {
 			if (serverLevelIn.isThundering()) return this.thunderstorm;
