@@ -280,9 +280,7 @@ public class CorvicraftSpawnHandler {
 		return CorvicraftSpawnSet.readFromJson(nameIn, jsonObj, CorvicraftSpawnEntry.DUMMY);
 	}
 	
-	public boolean hasSpawnSets() {
-		return !this.spawnSets.isEmpty();
-	}
+	public boolean hasSpawnSets() { return !this.spawnSets.isEmpty(); }
 	
 	public Optional<CorvicraftSpawnSet> getSetForBiome(Biome biomeIn) {
 		if (biomeIn != null) return this.getSetForBiome(biomeIn.getRegistryName());
@@ -307,9 +305,7 @@ public class CorvicraftSpawnHandler {
 		return false;
 	}
 	
-	public boolean shouldLogDebugData() { 
-		return CorvicraftConfig.ADVANCED_DEBUGGING.get();
-	}
+	public boolean shouldLogDebugData() { return CorvicraftConfig.ADVANCED_DEBUGGING.get(); }
 	
 	public static class Builder {
 		

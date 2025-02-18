@@ -39,6 +39,11 @@ public class RarityModifiers {
 		this(baseRarityIn, MoonRarity.NONE, WeatherRarity.NONE);
 	}
 
+	/** Gets the total combination of all rarity modifiers for this level and blockpos at this time. 
+	 * This is a number ranging from 0.0-1.0, which can thus be read as a percent.
+	 * Rarity modifiers do NOT apply to default Minecraft styled spawns, and thus cannot influence vanilla or vanilla-styled entries.
+	 * However, they are included in order to make them accessible to those using CorviCraft for modded spawns who wish to apply the value manually.
+	 */
 	public double getLocalRarity(ServerLevel serverLevelIn, BlockPos spawnPosIn) {
 		double localRarity = this.baseRarity;
 		if (serverLevelIn != null) {
@@ -63,6 +68,7 @@ public class RarityModifiers {
 		if (!weather.isEmpty()) jsonIn.add(WEATHER_MODIFIER, weather.get());
 	}
 	
+	/** Automatically gets a value exactly between the two provided rarities */
 	public static double getMidpointRarity(double firstRarityIn, double secondRarityIn) {
 		return firstRarityIn > secondRarityIn ? ((firstRarityIn - secondRarityIn) / 2) + secondRarityIn
 			: firstRarityIn < secondRarityIn ? ((secondRarityIn - firstRarityIn) / 2) + firstRarityIn : firstRarityIn;

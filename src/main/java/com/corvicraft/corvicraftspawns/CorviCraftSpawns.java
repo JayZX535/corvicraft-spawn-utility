@@ -30,7 +30,6 @@ public class CorviCraftSpawns
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final String MODID = "corvicraftspawns";
     private static final Path configPath = FMLPaths.GAMEDIR.get().resolve("config").toAbsolutePath();
-    //private static final CorviSpawnsManager VANILLA_SPAWNS = getNewCorviCraftSpawnsVanilla();
     
     private static final CorvicraftSpawnHandler HANDLER = buildSpawns();
 
@@ -43,17 +42,12 @@ public class CorviCraftSpawns
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CorvicraftConfig.SPEC, MODID + "-common.toml");
     }
     
-    /**
-	 * Biome load event
-	 * Used to add spawns for vanilla mobs
-	 */
+    /** Biome load event: Used to add spawns for vanilla mobs */
     public void addSpawn(BiomeLoadingEvent eventIn) {
-    	HANDLER.addSpawns(eventIn);
+    	if (CorvicraftConfig.OVERRIDE_VANILLA.get()) HANDLER.addSpawns(eventIn);
 	}
     
-    /**
-     * Event handler for mod events-- NOT forge events!
-     */
+    /** Event handler for mod events-- NOT forge events! */
     @Mod.EventBusSubscriber(modid = CorviCraftSpawns.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
     public class CorviCraftEvents {
     	
@@ -71,6 +65,10 @@ public class CorviCraftSpawns
     public static Path getConfigPath() {return configPath;}
     public static Logger getLogger() {return LOGGER;}
     
+    /**
+     * Default spawn sets represent an exact replica of vanilla spawns.
+     * Note that these are not used by default, but are only applied if spawn overriding is enabled in the config.
+     */
     @SuppressWarnings("unchecked")
 	private static CorvicraftSpawnHandler buildSpawns() {
     	CorvicraftSpawnEntry[] darkDefaults = new CorvicraftSpawnEntry[] {
