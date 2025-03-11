@@ -48,21 +48,26 @@ public class CorvicraftSpawnSet {
 	public void addSpawnEntries(BiomeLoadingEvent eventIn, List<EntityType<?>> validTypesIn) {
 		for (int i = 0; i < this.spawnEntries.size(); i++) {
 			CorvicraftSpawnEntry activeEntry = this.spawnEntries.get(i);
-			if (this.isValidEntityType(activeEntry.entityType, validTypesIn)) eventIn.getSpawns().getSpawner(activeEntry.getSpawnCategory()).add(activeEntry.getSpawnerData());
+			EntityType<?> entityType = this.getValidEntityType(activeEntry.entityType, validTypesIn);
+			if (entityType != null) eventIn.getSpawns().getSpawner(entityType.getCategory()).add(activeEntry.getSpawnerData());
 		}
 	}
 	
-	public boolean isValidEntityType(ResourceLocation testTypeIn, List<EntityType<?>> validTypesIn) {
+	public EntityType<?> getValidEntityType(ResourceLocation testTypeIn, List<EntityType<?>> validTypesIn) {
 		if (testTypeIn == null) {
 			CorviCraftSpawns.getLogger().warn("Provided entity type was null!");
-			return false;
+			return null;
 		}
 		if (ForgeRegistries.ENTITIES.containsKey(testTypeIn)) {
 			EntityType<?> testType = ForgeRegistries.ENTITIES.getValue(testTypeIn);
-			if (validTypesIn.contains(testType)) return true;
+			if (validTypesIn.contains(testType)) return testType;
 			else CorviCraftSpawns.getLogger().warn("Entity type " + testTypeIn.toString() + " is not controlled by this mod's spawn set!");
 		} else CorviCraftSpawns.getLogger().warn("Entity type " + testTypeIn.toString() + " was not found in Forge registry!");
-		return false;
+		return null;
+	}
+	
+	public boolean isValidEntityType(ResourceLocation testTypeIn, List<EntityType<?>> validTypesIn) {
+		return getValidEntityType(testTypeIn, validTypesIn) != null;
 	}
 	
 	public static Optional<CorvicraftSpawnSet> readFromJson(String nameIn, JsonObject jsonObjIn, @Nonnull CorvicraftSpawnEntry dummyIn) { 

@@ -6,7 +6,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-version = '1.0.0'
+version = '2.2'
 group = 'com.corvicraft.corvicraftspawns' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 base {
     archivesName = "${mod_id}-forge${minecraft_version}-${mod_version}"
